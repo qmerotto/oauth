@@ -13,6 +13,15 @@ import (
 
 var DB *gorm.DB
 
+type Settings struct {
+	Name     string
+	User     string
+	Password string
+	Host     string
+	Port     string
+	PoolSize int
+}
+
 func Connect(user string, password string, host string, port string, database string, poolSize int, logLevel logger.LogLevel) {
 	var err error
 	DB, err = gorm.Open(
