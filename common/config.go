@@ -7,16 +7,13 @@ import (
 	"strconv"
 	"strings"
 
+	"oauth/common/database"
+
 	"github.com/joho/godotenv"
 )
 
 type settings struct {
-	DatabaseName     string
-	DatabaseUser     string
-	DatabasePassword string
-	DatabaseHost     string
-	DatabasePort     string
-	DatabasePoolSize int
+	Database database.Settings
 }
 
 var currentSettings settings
@@ -31,10 +28,6 @@ func InitializeConfiguration() {
 	}
 }
 
-func Settings() settings {
-	return currentSettings
-}
-
 func (s *settings) setFromEnvVariables() error {
 	var emptyVariables []string
 
@@ -43,12 +36,12 @@ func (s *settings) setFromEnvVariables() error {
 		panic(err)
 	}
 
-	s.DatabaseName = os.Getenv("DATABASE_NAME")
-	s.DatabaseUser = os.Getenv("DATABASE_USER")
-	s.DatabasePassword = os.Getenv("DATABASE_PASSWORD")
-	s.DatabaseHost = os.Getenv("DATABASE_HOST")
-	s.DatabasePort = os.Getenv("DATABASE_PORT")
-	s.DatabasePoolSize = dbPoolSize
+	s.Database.Name = os.Getenv("DATABASE_NAME")
+	s.Database.User = os.Getenv("DATABASE_USER")
+	s.Database.Password = os.Getenv("DATABASE_PASSWORD")
+	s.Database.Host = os.Getenv("DATABASE_HOST")
+	s.Database.Port = os.Getenv("DATABASE_PORT")
+	s.Database.PoolSize = dbPoolSize
 
 	v := reflect.ValueOf(s).Elem()
 	typeOfV := v.Type()
@@ -63,4 +56,12 @@ func (s *settings) setFromEnvVariables() error {
 	}
 
 	return fmt.Errorf("the following environment variables are missing: %s", strings.Join(emptyVariables, ", "))
+}
+
+func Settings() settings {
+	return currentSettings
+}
+
+func (s settings) DB() database.Settings {
+	return s.Database
 }

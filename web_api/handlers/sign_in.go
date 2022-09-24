@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Ticket(ctx *gin.Context) {
+func SignIn(ctx *gin.Context) {
 	body := ctx.Request.Body
 
 	_, err := io.ReadAll(body)
