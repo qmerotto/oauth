@@ -2,6 +2,7 @@ package web_api
 
 import (
 	"oauth/web_api/handlers"
+	"oauth/web_api/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,9 +18,11 @@ func getRouter() *gin.Engine {
 	r.Use(gin.Recovery())
 
 	v1 := r.Group("/web_api")
-	{
-		v1.POST("/ticket", func(c *gin.Context) { handlers.Ticket(c) })
-	}
+	v2 := v1.Group("/authentication")
+	v2.POST("/sign_in", func(c *gin.Context) { handlers.SignIn(c) })
+
+	v3 := v1.Group("/authorization")
+	v3.Use(middleware.AuthMiddleware())
 
 	return r
 }
