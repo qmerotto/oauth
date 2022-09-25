@@ -22,6 +22,14 @@ var M20220905185106 = gormigrate.Migration{
 				id uuid PRIMARY KEY,
 				name varchar(32) NOT NULL
 			);
+			CREATE TABLE ressources (
+				id uuid PRIMARY KEY,
+				name varchar(32) NOT NULL
+			);
+			CREATE TABLE roles (
+				id uuid PRIMARY KEY,
+				name varchar(32) NOT NULL
+			);
 
 			INSERT INTO users VALUES(uuid_generate_v4 (), 'user');
 			INSERT INTO users VALUES(uuid_generate_v4 (), 'admin');
@@ -32,6 +40,13 @@ var M20220905185106 = gormigrate.Migration{
 			INSERT INTO ressource_servers VALUES(uuid_generate_v4 (), 'ms_1');
 			INSERT INTO ressource_servers VALUES(uuid_generate_v4 (), 'ms_2');
 			INSERT INTO ressource_servers VALUES(uuid_generate_v4 (), 'front');
+
+			INSERT INTO ressources VALUES(uuid_generate_v4 (), 'account');
+			INSERT INTO ressources VALUES(uuid_generate_v4 (), 'obj1');
+			INSERT INTO ressources VALUES(uuid_generate_v4 (), 'obj2');
+
+			INSERT INTO roles VALUES(uuid_generate_v4 (), 'basic_user');
+			INSERT INTO roles VALUES(uuid_generate_v4 (), 'admin');
 		`).Error; err != nil {
 			return err
 		}
@@ -42,6 +57,8 @@ var M20220905185106 = gormigrate.Migration{
 			DROP TABLE users;
 			DROP TABLE clients;
 			DROP TABLE ressource_servers;
+			DROP TABLE ressources;
+			DROP TABLE roles;
 		`).Error; err != nil {
 			return err
 		}
