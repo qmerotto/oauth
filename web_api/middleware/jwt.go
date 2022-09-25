@@ -1,14 +1,16 @@
 package middleware
 
 import (
-	"oauth/web_api/services/jwt"
+	"oauth/web_api/services/auth"
 
 	"github.com/gin-gonic/gin"
 )
 
 func AuthMiddleware() gin.HandlerFunc {
-	return gin.HandlerFunc(func(c *gin.Context) {
-		jwtContent := jwt.Parser().Parse(c.Request.Header.Get("AUTHORIZATION"))
-		c.Set("JWTContent", jwtContent)
-	})
+	return func(c *gin.Context) {
+		jwtContent, err := auth.Parser().Parse(c.Request.Header.Get("AUTHORIZATION"))
+		if err != nil {
+			c.Set("JWTContent", jwtContent)
+		}
+	}
 }
