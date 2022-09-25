@@ -1,7 +1,9 @@
 package common
 
 import (
+	"crypto/rsa"
 	"fmt"
+	"oauth/common/utils"
 	"os"
 	"reflect"
 	"strconv"
@@ -13,7 +15,9 @@ import (
 )
 
 type settings struct {
-	Database database.Settings
+	Database      database.Settings
+	RsaPublicKey  *rsa.PublicKey
+	RsaPrivateKey *rsa.PrivateKey
 }
 
 var currentSettings settings
@@ -42,6 +46,18 @@ func (s *settings) setFromEnvVariables() error {
 	s.Database.Host = os.Getenv("DATABASE_HOST")
 	s.Database.Port = os.Getenv("DATABASE_PORT")
 	s.Database.PoolSize = dbPoolSize
+
+	rsaPublickey, err := utils.ParsePublicKey(os.Getenv("RSA_PUBLIC_KEY"))
+	if err != nil || rsaPublickey == nil {
+		panic(fmt.Errorf("cannot parse public key: %s", err.Error()))
+	}
+	s.RsaPublicKey = rsaPublickey
+
+	rsaPrivatekey, err := utils.ParsePrivateKey(os.Getenv("RSA_PRIVATE_KEY"))
+	if err != nil || rsaPublickey == nil {
+		panic(fmt.Errorf("cannot parse private key: %s", err.Error()))
+	}
+	s.RsaPrivateKey = rsaPrivatekey
 
 	v := reflect.ValueOf(s).Elem()
 	typeOfV := v.Type()
