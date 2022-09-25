@@ -1,9 +1,12 @@
 package handlers
 
 import (
+	"fmt"
+	"github.com/google/uuid"
 	"io"
 	"log"
 	"net/http"
+	"oauth/web_api/services/auth"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,5 +21,12 @@ func SignIn(ctx *gin.Context) {
 		return
 	}
 
+	token, err := auth.Generator().Generate(&auth.Claims{UserUUID: uuid.New()})
+	if err != nil {
+		ctx.Status(http.StatusInternalServerError)
+		return
+	}
+
+	ctx.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	ctx.Status(http.StatusAccepted)
 }
