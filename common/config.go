@@ -49,6 +49,7 @@ func (s *settings) setFromEnvVariables() error {
 
 	rsaPublickey, err := utils.ParsePublicKey(os.Getenv("RSA_PUBLIC_KEY"))
 	if err != nil || rsaPublickey == nil {
+		fmt.Printf(fmt.Sprintf("key: %s", os.Getenv("RSA_PUBLIC_KEY")))
 		panic(fmt.Errorf("cannot parse public key: %s", err.Error()))
 	}
 	s.RsaPublicKey = rsaPublickey

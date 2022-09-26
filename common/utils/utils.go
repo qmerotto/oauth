@@ -32,6 +32,7 @@ func ParsePrivateKey(privateKey string) (*rsa.PrivateKey, error) {
 	if err != nil {
 		return nil, fmt.Errorf(fmt.Sprintf("Error while decoding public key: %s", err.Error()))
 	}
+
 	decodedPrivateKey = []byte(strings.ReplaceAll(string(decodedPrivateKey), "\\n", "\n"))
 	rsaPrivateKey, err := jwt.ParseRSAPrivateKeyFromPEM(decodedPrivateKey)
 	if err != nil {
