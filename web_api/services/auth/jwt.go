@@ -41,5 +41,5 @@ func Generator() *generator {
 func (g *generator) Generate(claims *Claims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 
-	return token.SignedString([]byte("my_private_key"))
+	return token.SignedString(common.Settings().RsaPrivateKey)
 }
