@@ -4,14 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
-	"io"
 	"log"
 	"net/http"
+	"oauth/common/database/models"
 	"oauth/web_api/services/auth"
+	"time"
 )
 
-type Credentials struct {
+type signIn struct{}
+
+type signInCredentials struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
@@ -23,20 +25,15 @@ func SignIn(ctx *gin.Context) {
 		}
 	}(ctx)
 
-	basic := basic{
-		ctx: ctx,
-	}
-	basic.BasicAuth()
-	body, err := io.ReadAll(ctx.Request.Body)
-	if err != nil {
-		log.Printf("read body error: %s", err.Error())
+	basic := &basic{ctx: ctx}
+	if err := basic.Read(); err != nil {
 		ctx.Status(http.StatusBadRequest)
 		return
 	}
 
-	credentials := &Credentials{}
-	if err = json.Unmarshal(body, credentials); err != nil {
-		log.Printf("credential unmarshalling error: %s", err.Error())
+	credentials := &signInCredentials{}
+	if err := json.Unmarshal(basic.body, credentials); err != nil {
+		log.Printf("signInCredentials unmarshalling error: %s", err.Error())
 	}
 
 	if credentials == nil {
@@ -44,7 +41,9 @@ func SignIn(ctx *gin.Context) {
 	}
 	fmt.Printf(fmt.Sprintf("username: %s password: %s", credentials.Username, credentials.Password))
 
-	token, err := auth.Generator().Generate(&auth.Claims{UserUUID: uuid.New()})
+	user := &models.User{}
+
+	token, err := auth.Generator().Generate(&auth.Claims{UserUUID: user.UUID, ExpiredAt: time.Now()})
 	if err != nil {
 		log.Printf("auth generation error: %s", err.Error())
 		ctx.Status(http.StatusInternalServerError)

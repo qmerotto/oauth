@@ -12,7 +12,9 @@ var M20220905185106 = gormigrate.Migration{
 			CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 			CREATE TABLE users (
 				uuid uuid PRIMARY KEY,
-				name varchar(32)
+				name varchar(32),
+				password varchar(32),
+				email varchar(32)
 			);
 			CREATE TABLE clients (
 				id uuid PRIMARY KEY,

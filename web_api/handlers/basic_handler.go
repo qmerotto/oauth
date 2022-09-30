@@ -3,12 +3,35 @@ package handlers
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"io"
+	"log"
 	"oauth/web_api/services/auth"
 	"strings"
 )
 
 type basic struct {
-	ctx *gin.Context
+	ctx  *gin.Context
+	body []byte
+}
+
+func (b *basic) Read() error {
+	body, err := io.ReadAll(b.ctx.Request.Body)
+	if err != nil {
+		log.Printf("read body error: %s", err.Error())
+		return err
+	}
+
+	b.body = body
+	return nil
+}
+
+func (b *basic) Credentials() error {
+
+	return nil
+}
+
+func (b *basic) JWT() error {
+	return nil
 }
 
 func (b *basic) BasicAuth() error {

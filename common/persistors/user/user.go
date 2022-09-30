@@ -8,17 +8,17 @@ import (
 )
 
 type Persistor interface {
-	Create(order *models.User) error
+	Create(user *models.User) error
 }
 
-type user struct {
+type persistor struct {
 	Conn *gorm.DB
 }
 
-func GetPersistor() *user {
-	return &user{Conn: database.DB}
+func GetPersistor() *persistor {
+	return &persistor{Conn: database.DB}
 }
 
-func (u *user) Create(order *models.User) error {
-	return u.Conn.Create(order).Error
+func (u *persistor) Create(user *models.User) error {
+	return u.Conn.Create(user).Error
 }

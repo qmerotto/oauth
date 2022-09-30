@@ -18,8 +18,9 @@ func getRouter() *gin.Engine {
 	r.Use(gin.Recovery())
 
 	v1 := r.Group("/web_api")
-	v2 := v1.Group("/authentication")
+	v2 := v1.Group("/auth")
 	v2.POST("/sign_in", func(c *gin.Context) { handlers.SignIn(c) })
+	v2.POST("/sign_up", func(c *gin.Context) { handlers.SignUp(c) })
 
 	v3 := v1.Group("/authorization")
 	v3.Use(middleware.AuthMiddleware())
