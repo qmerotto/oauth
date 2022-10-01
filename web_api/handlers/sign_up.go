@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"log"
 	"net/http"
 	"oauth/common/database/models"
@@ -18,6 +19,7 @@ type signUp struct {
 type signUpCredentials struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+	Email    string `json:"email"`
 }
 
 func SignUp(ctx *gin.Context) {
@@ -57,12 +59,15 @@ func (s *signUp) Exec() error {
 	fmt.Printf(fmt.Sprintf("username: %s password: %s", credentials.Username, credentials.Password))
 
 	err := s.persistor.Create(&models.User{
-		Username: credentials.Username,
+		UUID:     uuid.New(),
+		Name:     credentials.Username,
 		Password: credentials.Password,
+		Email:    credentials.Email,
 	})
 	if err != nil {
 		log.Printf("user creation error: %s", err.Error())
 		return err
 	}
+
 	return nil
 }

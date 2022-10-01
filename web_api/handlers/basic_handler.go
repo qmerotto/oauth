@@ -14,6 +14,11 @@ type basic struct {
 	body []byte
 }
 
+type Error struct {
+	message string
+	code    string
+}
+
 func (b *basic) Read() error {
 	body, err := io.ReadAll(b.ctx.Request.Body)
 	if err != nil {

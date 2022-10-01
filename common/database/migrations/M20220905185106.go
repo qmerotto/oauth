@@ -16,15 +16,17 @@ var M20220905185106 = gormigrate.Migration{
 				password varchar(32),
 				email varchar(32)
 			);
+			CONSTRAINT uniq_email UNIQUE (email);
+
 			CREATE TABLE clients (
 				id uuid PRIMARY KEY,
 				name varchar(32) NOT NULL
 			);
-			CREATE TABLE ressource_servers (
+			CREATE TABLE resource_servers (
 				id uuid PRIMARY KEY,
 				name varchar(32) NOT NULL
 			);
-			CREATE TABLE ressources (
+			CREATE TABLE resources (
 				id uuid PRIMARY KEY,
 				name varchar(32) NOT NULL
 			);
@@ -33,19 +35,16 @@ var M20220905185106 = gormigrate.Migration{
 				name varchar(32) NOT NULL
 			);
 
-			INSERT INTO users VALUES(uuid_generate_v4 (), 'user');
-			INSERT INTO users VALUES(uuid_generate_v4 (), 'admin');
-
 			INSERT INTO clients VALUES(uuid_generate_v4 (), 'web');
 			INSERT INTO clients VALUES(uuid_generate_v4 (), 'mobile');
 
-			INSERT INTO ressource_servers VALUES(uuid_generate_v4 (), 'ms_1');
-			INSERT INTO ressource_servers VALUES(uuid_generate_v4 (), 'ms_2');
-			INSERT INTO ressource_servers VALUES(uuid_generate_v4 (), 'front');
+			INSERT INTO resource_servers VALUES(uuid_generate_v4 (), 'ms_1');
+			INSERT INTO resource_servers VALUES(uuid_generate_v4 (), 'ms_2');
+			INSERT INTO resource_servers VALUES(uuid_generate_v4 (), 'front');
 
-			INSERT INTO ressources VALUES(uuid_generate_v4 (), 'account');
-			INSERT INTO ressources VALUES(uuid_generate_v4 (), 'obj1');
-			INSERT INTO ressources VALUES(uuid_generate_v4 (), 'obj2');
+			INSERT INTO resources VALUES(uuid_generate_v4 (), 'account');
+			INSERT INTO resources VALUES(uuid_generate_v4 (), 'obj1');
+			INSERT INTO resources VALUES(uuid_generate_v4 (), 'obj2');
 
 			INSERT INTO roles VALUES(uuid_generate_v4 (), 'basic_user');
 			INSERT INTO roles VALUES(uuid_generate_v4 (), 'admin');
@@ -58,8 +57,8 @@ var M20220905185106 = gormigrate.Migration{
 		if err := tx.Exec(`
 			DROP TABLE users;
 			DROP TABLE clients;
-			DROP TABLE ressource_servers;
-			DROP TABLE ressources;
+			DROP TABLE resource_servers;
+			DROP TABLE resources;
 			DROP TABLE roles;
 		`).Error; err != nil {
 			return err
