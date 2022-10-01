@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"oauth/common/database/models"
 	"oauth/common/persistors/user"
+	"oauth/common/utils"
 )
 
 type signUp struct {
@@ -59,11 +60,18 @@ func (s *signUp) Exec() error {
 		return err
 	}
 
-	if credentials == nil {
-		s.base.ctx.JSON(http.StatusForbidden, gin.H{
+	if credentials == nil || !credentials.isValid() {
+		s.base.ctx.JSON(http.StatusBadRequest, gin.H{
 			"message": "credentials_error",
 		})
 		return fmt.Errorf("invalid credentials")
+	}
+
+	if err := credentials.HashPassword(); err != nil {
+		s.base.ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "credentials_error",
+		})
+		return fmt.Errorf("password hashing error")
 	}
 	fmt.Printf(fmt.Sprintf("username: %s password: %s", credentials.Username, credentials.Password))
 
@@ -84,14 +92,24 @@ func (s *signUp) Exec() error {
 	return nil
 }
 
-func (s *signUpCredentials) Validate() error {
+func (s *signUpCredentials) isValid() bool {
 	if len(s.Password) < 8 {
-		return fmt.Errorf("password too short")
+		return false
 	}
 
 	if len(s.Email) == 0 {
-		return fmt.Errorf("invalid email")
+		return false
 	}
 
+	return true
+}
+
+func (s *signUpCredentials) HashPassword() error {
+	password, err := utils.Hash(s.Password)
+	if err != nil {
+		return fmt.Errorf("password too short")
+	}
+
+	s.Password = password
 	return nil
 }

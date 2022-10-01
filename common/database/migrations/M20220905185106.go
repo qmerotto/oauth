@@ -13,7 +13,7 @@ var M20220905185106 = gormigrate.Migration{
 			CREATE TABLE users (
 				uuid uuid PRIMARY KEY,
 				name varchar(32) NOT NULL,
-				password varchar(32) NOT NULL,
+				password varchar(100) NOT NULL,
 				email varchar(32) UNIQUE NOT NULL
 			);
 
