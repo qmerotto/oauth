@@ -5,16 +5,24 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 	"log"
 	"net/http"
+	"oauth/common/database/models"
+	refresh_token "oauth/common/persistors/refreshToken"
 	"oauth/common/persistors/user"
 	"oauth/web_api/services/auth"
 	"time"
 )
 
 type signIn struct {
-	base      *basic
-	persistor user.Persistor
+	base       *basic
+	persistors persistor
+}
+
+type persistor struct {
+	user         user.Persistor
+	refreshToken refresh_token.Persistor
 }
 
 type signInCredentials struct {
@@ -22,9 +30,15 @@ type signInCredentials struct {
 	Password string `json:"password"`
 }
 
+type signInResult struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+}
+
 func SignIn(ctx *gin.Context) {
 	defer func(ctx *gin.Context) {
 		if err := recover(); err != nil {
+			fmt.Printf("recovering error: %s", err)
 			ctx.Status(http.StatusInternalServerError)
 		}
 	}(ctx)
@@ -32,16 +46,19 @@ func SignIn(ctx *gin.Context) {
 	resultChan := make(chan interface{}, 1)
 	defer close(resultChan)
 
-	err := (&signIn{base: &basic{ctx: ctx}, persistor: user.GetPersistor()}).Exec(resultChan)
+	err := (&signIn{
+		base: &basic{ctx: ctx},
+		persistors: persistor{
+			user:         user.GetPersistor(),
+			refreshToken: refresh_token.GetPersistor(),
+		}}).Exec(resultChan)
 	if err != nil {
 		log.Printf("sign up error: %v", err)
 		return
 	}
 
-	token := <-resultChan
-	ctx.JSON(http.StatusOK, gin.H{
-		"token": fmt.Sprintf("Bearer %s", token.(string)),
-	})
+	result := <-resultChan
+	ctx.JSON(http.StatusOK, result)
 }
 
 func (s *signIn) Exec(ch chan interface{}) error {
@@ -68,7 +85,7 @@ func (s *signIn) Exec(ch chan interface{}) error {
 		return fmt.Errorf("invalid credentials")
 	}
 
-	user, err := s.persistor.GetUserByMail(credentials.Email)
+	user, err := s.persistors.user.GetUserByMail(credentials.Email)
 	if err != nil {
 		s.base.ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": "read_error",
@@ -83,12 +100,12 @@ func (s *signIn) Exec(ch chan interface{}) error {
 		return err
 	}
 
-	token, err := auth.Generator().Generate(
+	accessToken, err := auth.Generator().Generate(
 		&auth.Claims{
 			StandardClaims: jwt.StandardClaims{
 				Issuer:    "oauth",
 				IssuedAt:  time.Now().Unix(),
-				ExpiresAt: time.Now().Add(time.Hour).Unix(),
+				ExpiresAt: time.Now().Add(15 * time.Hour).Unix(),
 			},
 			UserUUID: user.UUID,
 		},
@@ -99,6 +116,29 @@ func (s *signIn) Exec(ch chan interface{}) error {
 		return err
 	}
 
-	ch <- token
+	refreshTokenUUID := uuid.New()
+	err = s.persistors.refreshToken.Create(&models.RefreshToken{
+		UUID:     refreshTokenUUID,
+		UserUUID: user.UUID,
+	})
+
+	refreshToken, err := auth.Generator().Generate(
+		&auth.Claims{
+			StandardClaims: jwt.StandardClaims{
+				Id:        refreshTokenUUID.String(),
+				Issuer:    "oauth",
+				IssuedAt:  time.Now().Unix(),
+				ExpiresAt: time.Now().Add(time.Hour).Unix(),
+			},
+		},
+	)
+
+	if err != nil {
+		fmt.Printf("error when saving refresh token: %s", err.Error())
+		return err
+	}
+
+	ch <- signInResult{AccessToken: accessToken, RefreshToken: refreshToken}
+
 	return nil
 }

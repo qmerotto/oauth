@@ -16,7 +16,6 @@ var M20220905185106 = gormigrate.Migration{
 				password varchar(100) NOT NULL,
 				email varchar(32) UNIQUE NOT NULL
 			);
-
 			CREATE TABLE clients (
 				id uuid PRIMARY KEY,
 				name varchar(32) NOT NULL
@@ -32,6 +31,12 @@ var M20220905185106 = gormigrate.Migration{
 			CREATE TABLE roles (
 				id uuid PRIMARY KEY,
 				name varchar(32) NOT NULL
+			);
+			CREATE TABLE refresh_tokens (
+				uuid uuid PRIMARY KEY,
+				token varchar NOT NULL,
+				user_uuid uuid NOT NULL,
+				FOREIGN KEY (user_uuid) REFERENCES users(uuid)
 			);
 
 			INSERT INTO clients VALUES(uuid_generate_v4 (), 'web');
@@ -59,6 +64,7 @@ var M20220905185106 = gormigrate.Migration{
 			DROP TABLE resource_servers;
 			DROP TABLE resources;
 			DROP TABLE roles;
+			DROP TABLE refresh_tokens;
 		`).Error; err != nil {
 			return err
 		}
