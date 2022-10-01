@@ -1,10 +1,9 @@
 package web_api
 
 import (
+	"github.com/gin-gonic/gin"
 	"oauth/web_api/handlers"
 	"oauth/web_api/middleware"
-
-	"github.com/gin-gonic/gin"
 )
 
 func RunServer() {
@@ -24,6 +23,8 @@ func getRouter() *gin.Engine {
 
 	v3 := v1.Group("/authorization")
 	v3.Use(middleware.AuthMiddleware())
+
+	v3.GET("/test", func(c *gin.Context) { handlers.TRR(c) })
 
 	return r
 }

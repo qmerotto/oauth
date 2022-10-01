@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"log"
 	"net/http"
 	"oauth/common/persistors/user"
@@ -82,7 +83,16 @@ func (s *signIn) Exec(ch chan interface{}) error {
 		return err
 	}
 
-	token, err := auth.Generator().Generate(&auth.Claims{UserUUID: user.UUID, ExpiredAt: time.Now()})
+	token, err := auth.Generator().Generate(
+		&auth.Claims{
+			StandardClaims: jwt.StandardClaims{
+				Issuer:    "oauth",
+				IssuedAt:  time.Now().Unix(),
+				ExpiresAt: time.Now().Add(time.Hour).Unix(),
+			},
+			UserUUID: user.UUID,
+		},
+	)
 	if err != nil {
 		log.Printf("auth generation error: %s", err.Error())
 		s.base.ctx.Status(http.StatusInternalServerError)

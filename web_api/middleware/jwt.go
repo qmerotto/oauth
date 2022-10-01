@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"oauth/web_api/services/auth"
@@ -10,6 +11,7 @@ import (
 
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		fmt.Printf("auth: %s", c.Request.Header.Get("AUTHORIZATION"))
 		jwtContent, err := auth.Parser().Parse(c.Request.Header.Get("AUTHORIZATION"))
 
 		if err == nil && jwtContent != nil {

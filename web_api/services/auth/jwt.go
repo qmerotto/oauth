@@ -6,13 +6,11 @@ import (
 	"github.com/google/uuid"
 	"oauth/common"
 	"strings"
-	"time"
 )
 
 type Claims struct {
-	jwt.Claims
-	UserUUID  uuid.UUID
-	ExpiredAt time.Time
+	jwt.StandardClaims
+	UserUUID uuid.UUID
 }
 
 type parser struct{}
@@ -41,6 +39,5 @@ func Generator() *generator {
 
 func (g *generator) Generate(claims *Claims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-
 	return token.SignedString(common.Settings().RsaPrivateKey)
 }
