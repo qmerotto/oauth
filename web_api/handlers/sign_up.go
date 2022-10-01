@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"log"
 	"net/http"
+	"oauth/common"
 	"oauth/common/database/models"
 	"oauth/common/persistors/user"
 	"oauth/common/utils"
@@ -105,7 +106,7 @@ func (s *signUpCredentials) isValid() bool {
 }
 
 func (s *signUpCredentials) HashPassword() error {
-	password, err := utils.Hash(s.Password)
+	password, err := utils.Hash(s.Password, common.Settings().Pepper)
 	if err != nil {
 		return fmt.Errorf("password too short")
 	}

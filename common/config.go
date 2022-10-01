@@ -16,7 +16,7 @@ import (
 
 type settings struct {
 	Database      database.Settings
-	Pepper        string
+	Pepper        []byte
 	RsaPublicKey  *rsa.PublicKey
 	RsaPrivateKey *rsa.PrivateKey
 }
@@ -48,7 +48,7 @@ func (s *settings) setFromEnvVariables() error {
 	s.Database.Port = os.Getenv("DATABASE_PORT")
 	s.Database.PoolSize = dbPoolSize
 
-	s.Pepper = os.Getenv("PEPPER")
+	s.Pepper = []byte(os.Getenv("PEPPER"))
 
 	rsaPublickey, err := utils.ParsePublicKey(os.Getenv("RSA_PUBLIC_KEY"))
 	if err != nil || rsaPublickey == nil {

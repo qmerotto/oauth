@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt"
-	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/crypto/pbkdf2"
 	"io"
 	"strconv"
@@ -50,12 +49,7 @@ func ParsePrivateKey(privateKey string) (*rsa.PrivateKey, error) {
 	return rsaPrivateKey, nil
 }
 
-func EncodePassword(password string) string {
-	bcrypt.GenerateFromPassword([]byte(password), 10)
-	return ""
-}
-
-func Hash(password string) (string, error) {
+func Hash(password string, pepper []byte) (string, error) {
 	salt := make([]byte, 12)
 	if _, err := io.ReadFull(rand.Reader, salt); err != nil {
 		fmt.Print("Err generating random salt")
@@ -63,6 +57,7 @@ func Hash(password string) (string, error) {
 	}
 
 	hbts := pbkdf2.Key([]byte(password), salt, 10, 50, sha1.New)
+	hbts = pbkdf2.Key(hbts, pepper, 10, 50, sha1.New)
 
 	return fmt.Sprintf("%v:%v:%v",
 		10,
@@ -70,26 +65,28 @@ func Hash(password string) (string, error) {
 		base64.StdEncoding.EncodeToString(hbts)), nil
 }
 
-func Verify(raw, hash string) (bool, error) {
-	hparts := strings.Split(hash, ":")
+func Verify(raw, hash string, pepper []byte) (bool, error) {
+	hashParts := strings.Split(hash, ":")
 
-	itr, err := strconv.Atoi(hparts[0])
+	itr, err := strconv.Atoi(hashParts[0])
 	if err != nil {
 		fmt.Printf("wrong hash %v", hash)
 		return false, errors.New("wrong hash, iteration is invalid")
 	}
-	salt, err := base64.StdEncoding.DecodeString(hparts[1])
+	salt, err := base64.StdEncoding.DecodeString(hashParts[1])
 	if err != nil {
 		fmt.Print("wrong hash, salt error:", err)
 		return false, errors.New("wrong hash, salt error:" + err.Error())
 	}
 
-	hsh, err := base64.StdEncoding.DecodeString(hparts[2])
+	hsh, err := base64.StdEncoding.DecodeString(hashParts[2])
 	if err != nil {
 		fmt.Print("wrong hash, hash error:", err)
 		return false, errors.New("wrong hash, hash error:" + err.Error())
 	}
 
 	rhash := pbkdf2.Key([]byte(raw), salt, itr, len(hsh), sha1.New)
+	rhash = pbkdf2.Key(rhash, pepper, 10, 50, sha1.New)
+
 	return bytes.Equal(rhash, hsh), nil
 }

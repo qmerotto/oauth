@@ -9,6 +9,7 @@ import (
 
 type Persistor interface {
 	Create(user *models.User) error
+	GetUserByMail(email string) (*models.User, error)
 }
 
 type persistor struct {
@@ -19,6 +20,13 @@ func GetPersistor() *persistor {
 	return &persistor{Conn: database.DB}
 }
 
-func (u *persistor) Create(user *models.User) error {
-	return u.Conn.Create(user).Error
+func (p *persistor) Create(user *models.User) error {
+	return p.Conn.Create(user).Error
+}
+
+func (p *persistor) GetUserByMail(email string) (*models.User, error) {
+	var user models.User
+	tx := p.Conn.Where("email = ?", email).Find(&user)
+
+	return &user, tx.Error
 }
