@@ -15,8 +15,8 @@ type basic struct {
 }
 
 type Error struct {
-	message string
-	code    string
+	message string `message:"uuid"`
+	code    string `code:"uuid"`
 }
 
 func (b *basic) Read() error {
