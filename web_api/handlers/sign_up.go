@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"oauth/common/database/models"
 	"oauth/common/persistors/user"
+	"oauth/common/utils"
 )
 
 type signUp struct {
@@ -32,8 +33,7 @@ func SignUp(ctx *gin.Context) {
 
 	err := (&signUp{base: &basic{ctx: ctx}, persistor: user.GetPersistor()}).Exec()
 	if err != nil {
-		log.Printf("sign up error: %s", err.Error())
-		ctx.Status(http.StatusInternalServerError)
+		log.Printf("sign up error: %v", err)
 		return
 	}
 
@@ -45,16 +45,33 @@ func SignUp(ctx *gin.Context) {
 
 func (s *signUp) Exec() error {
 	if err := s.base.Read(); err != nil {
+		s.base.ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "read_error",
+		})
 		return err
 	}
 
 	credentials := &signUpCredentials{}
 	if err := json.Unmarshal(s.base.body, credentials); err != nil {
 		log.Printf("signUpCredentials unmarshalling error: %s", err.Error())
+		s.base.ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "unmarshall_error",
+		})
+		return err
 	}
 
-	if credentials == nil {
-		s.base.ctx.Status(http.StatusForbidden)
+	if credentials == nil || !credentials.isValid() {
+		s.base.ctx.JSON(http.StatusBadRequest, gin.H{
+			"message": "credentials_error",
+		})
+		return fmt.Errorf("invalid credentials")
+	}
+
+	if err := credentials.HashPassword(); err != nil {
+		s.base.ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "credentials_error",
+		})
+		return fmt.Errorf("password hashing error")
 	}
 	fmt.Printf(fmt.Sprintf("username: %s password: %s", credentials.Username, credentials.Password))
 
@@ -65,9 +82,34 @@ func (s *signUp) Exec() error {
 		Email:    credentials.Email,
 	})
 	if err != nil {
+		s.base.ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "user_creation_error",
+		})
 		log.Printf("user creation error: %s", err.Error())
 		return err
 	}
 
+	return nil
+}
+
+func (s *signUpCredentials) isValid() bool {
+	if len(s.Password) < 8 {
+		return false
+	}
+
+	if len(s.Email) == 0 {
+		return false
+	}
+
+	return true
+}
+
+func (s *signUpCredentials) HashPassword() error {
+	password, err := utils.Hash(s.Password)
+	if err != nil {
+		return fmt.Errorf("password too short")
+	}
+
+	s.Password = password
 	return nil
 }
