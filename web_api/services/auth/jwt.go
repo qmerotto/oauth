@@ -5,6 +5,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 	"oauth/common"
+	"strings"
 	"time"
 )
 
@@ -22,7 +23,7 @@ func Parser() *parser {
 
 func (p *parser) Parse(bearer string) (*Claims, error) {
 	claims := &Claims{}
-	token, err := jwt.ParseWithClaims(bearer, claims, func(t *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(strings.TrimPrefix(bearer, "Bearer "), claims, func(t *jwt.Token) (interface{}, error) {
 		return common.Settings().RsaPublicKey, nil
 	})
 	if err != nil || !token.Valid {
