@@ -20,11 +20,6 @@ type signIn struct {
 	persistors persistor
 }
 
-type persistor struct {
-	user         user.Persistor
-	refreshToken refresh_token.Persistor
-}
-
 type signInCredentials struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -43,7 +38,7 @@ func SignIn(ctx *gin.Context) {
 		}
 	}(ctx)
 
-	resultChan := make(chan interface{}, 1)
+	resultChan := make(chan signInResult, 1)
 	defer close(resultChan)
 
 	err := (&signIn{
@@ -57,11 +52,14 @@ func SignIn(ctx *gin.Context) {
 		return
 	}
 
-	result := <-resultChan
+	result, ok := <-resultChan
+	if !ok {
+		panic(err)
+	}
 	ctx.JSON(http.StatusOK, result)
 }
 
-func (s *signIn) Exec(ch chan interface{}) error {
+func (s *signIn) Exec(ch chan signInResult) error {
 	if err := s.base.Read(); err != nil {
 		s.base.ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": "read_error",

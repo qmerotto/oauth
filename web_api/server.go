@@ -20,11 +20,10 @@ func getRouter() *gin.Engine {
 	v2 := v1.Group("/auth")
 	v2.POST("/sign_in", func(c *gin.Context) { handlers.SignIn(c) })
 	v2.POST("/sign_up", func(c *gin.Context) { handlers.SignUp(c) })
+	v2.POST("/refresh_token", func(c *gin.Context) { handlers.RefreshToken(c) })
 
 	v3 := v1.Group("/authorization")
 	v3.Use(middleware.AuthMiddleware())
-
-	v3.GET("/test", func(c *gin.Context) { handlers.TRR(c) })
 
 	return r
 }

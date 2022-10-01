@@ -5,6 +5,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"io"
 	"log"
+	refresh_token "oauth/common/persistors/refreshToken"
+	"oauth/common/persistors/user"
 	"oauth/web_api/services/auth"
 	"strings"
 )
@@ -12,6 +14,11 @@ import (
 type basic struct {
 	ctx  *gin.Context
 	body []byte
+}
+
+type persistor struct {
+	user         user.Persistor
+	refreshToken refresh_token.Persistor
 }
 
 type Error struct {
