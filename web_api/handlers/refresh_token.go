@@ -2,11 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"log"
 	"net/http"
-	refresh_token "oauth/common/persistors/refreshToken"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
+	"oauth/common/persistors/refresh_token"
 	"oauth/common/persistors/user"
 	"oauth/web_api/services/auth"
 )
@@ -32,15 +35,13 @@ func RefreshToken(ctx *gin.Context) {
 		}
 	}(ctx)
 
-	resultChan := make(chan refreshTokenResult, 1)
-	defer close(resultChan)
-
+	result := &refreshTokenResult{}
 	err := (&refreshToken{
 		base: &basic{ctx: ctx},
 		persistors: persistor{
 			user:         user.GetPersistor(),
 			refreshToken: refresh_token.GetPersistor(),
-		}}).Exec(resultChan)
+		}}).Exec(result)
 	if err != nil {
 		log.Printf("sign up error: %v", err)
 		return
@@ -51,7 +52,7 @@ func RefreshToken(ctx *gin.Context) {
 	})
 }
 
-func (s *refreshToken) Exec(ch chan refreshTokenResult) error {
+func (s *refreshToken) Exec(result *refreshTokenResult) error {
 	if err := s.base.Read(); err != nil {
 		s.base.ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": "read_error",
@@ -67,6 +68,7 @@ func (s *refreshToken) Exec(ch chan refreshTokenResult) error {
 		})
 		return err
 	}
+
 	claims, err := auth.Parser().Parse(refreshTokenInput.refreshToken)
 	if err != nil {
 		s.base.ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -74,6 +76,7 @@ func (s *refreshToken) Exec(ch chan refreshTokenResult) error {
 		})
 		return err
 	}
+
 	refreshToken, err := s.persistors.refreshToken.GetByUUID(uuid.MustParse(claims.Id))
 	if err != nil {
 		s.base.ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -88,5 +91,27 @@ func (s *refreshToken) Exec(ch chan refreshTokenResult) error {
 		})
 		return nil
 	}
+
+	accessToken, err := auth.Generator().Generate(
+		&auth.Claims{
+			StandardClaims: jwt.StandardClaims{
+				Issuer:    "oauth",
+				IssuedAt:  time.Now().Unix(),
+				ExpiresAt: time.Now().Add(15 * time.Hour).Unix(),
+			},
+			UserUUID: claims.UserUUID,
+		},
+	)
+	if err != nil {
+		s.base.ctx.JSON(http.StatusInternalServerError, gin.H{
+			"message": "access token generation error",
+		})
+		return err
+	}
+
+	*result = refreshTokenResult{
+		newAccessToken: accessToken,
+	}
+
 	return nil
 }

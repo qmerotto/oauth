@@ -5,7 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"io"
 	"log"
-	refresh_token "oauth/common/persistors/refreshToken"
+	"oauth/common/persistors/refresh_token"
 	"oauth/common/persistors/user"
 	"oauth/web_api/services/auth"
 	"strings"

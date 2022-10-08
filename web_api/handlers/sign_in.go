@@ -3,16 +3,17 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
-	"log"
-	"net/http"
 	"oauth/common/database/models"
-	refresh_token "oauth/common/persistors/refreshToken"
+	"oauth/common/persistors/refresh_token"
 	"oauth/common/persistors/user"
 	"oauth/web_api/services/auth"
-	"time"
 )
 
 type signIn struct {
@@ -38,28 +39,23 @@ func SignIn(ctx *gin.Context) {
 		}
 	}(ctx)
 
-	resultChan := make(chan signInResult, 1)
-	defer close(resultChan)
+	result := &signInResult{}
 
 	err := (&signIn{
 		base: &basic{ctx: ctx},
 		persistors: persistor{
 			user:         user.GetPersistor(),
 			refreshToken: refresh_token.GetPersistor(),
-		}}).Exec(resultChan)
+		}}).Exec(result)
 	if err != nil {
 		log.Printf("sign up error: %v", err)
 		return
 	}
 
-	result, ok := <-resultChan
-	if !ok {
-		panic(err)
-	}
 	ctx.JSON(http.StatusOK, result)
 }
 
-func (s *signIn) Exec(ch chan signInResult) error {
+func (s *signIn) Exec(res *signInResult) error {
 	if err := s.base.Read(); err != nil {
 		s.base.ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": "read_error",
@@ -136,7 +132,7 @@ func (s *signIn) Exec(ch chan signInResult) error {
 		return err
 	}
 
-	ch <- signInResult{AccessToken: accessToken, RefreshToken: refreshToken}
+	*res = signInResult{AccessToken: accessToken, RefreshToken: refreshToken}
 
 	return nil
 }

@@ -3,10 +3,11 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"log"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"oauth/common"
 	"oauth/common/database/models"
 	"oauth/common/persistors/user"
@@ -24,6 +25,10 @@ type signUpCredentials struct {
 	Email    string `json:"email"`
 }
 
+type signUpResult struct {
+	Status string `json:"status"`
+}
+
 func SignUp(ctx *gin.Context) {
 	defer func(ctx *gin.Context) {
 		if err := recover(); err != nil {
@@ -32,7 +37,8 @@ func SignUp(ctx *gin.Context) {
 		}
 	}(ctx)
 
-	err := (&signUp{base: &basic{ctx: ctx}, persistor: user.GetPersistor()}).Exec()
+	result := &signUpResult{}
+	err := (&signUp{base: &basic{ctx: ctx}, persistor: user.GetPersistor()}).Exec(result)
 	if err != nil {
 		log.Printf("sign up error: %v", err)
 		return
@@ -44,7 +50,7 @@ func SignUp(ctx *gin.Context) {
 	})
 }
 
-func (s *signUp) Exec() error {
+func (s *signUp) Exec(result *signUpResult) error {
 	if err := s.base.Read(); err != nil {
 		s.base.ctx.JSON(http.StatusInternalServerError, gin.H{
 			"message": "read_error",
@@ -90,6 +96,7 @@ func (s *signUp) Exec() error {
 		return err
 	}
 
+	*result = signUpResult{Status: "OK"}
 	return nil
 }
 
